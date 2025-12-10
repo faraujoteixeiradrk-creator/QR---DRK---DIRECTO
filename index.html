@@ -1,0 +1,1065 @@
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DRK: Comparador de Tarifas 2.0 TD</title>
+    <!-- Carga de Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Configuración de colores personalizados basados en tu logo -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        drk: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0ea5e9', /* Cian vibrante */
+                            600: '#0284c7',
+                            800: '#075985',
+                            900: '#0c4a6e', /* Azul profundo corporativo */
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        #interactive.viewport { position: relative; width: 100%; height: auto; overflow: hidden; border-radius: 1rem; }
+        #interactive.viewport > video { width: 100%; height: 100%; object-fit: cover; }
+        .loading-ring { border: 4px solid rgba(255, 255, 255, 0.3); border-top: 4px solid #0ea5e9; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        /* Animación para resultados */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in-up {
+            animation: fadeInUp 0.5s ease-out forwards;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+</head>
+<body class="flex flex-col min-h-screen text-slate-800">
+
+    <!-- Navbar Simple -->
+    <div class="w-full bg-drk-900 text-white p-4 shadow-md sticky top-0 z-50">
+        <div class="max-w-lg mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-bold tracking-tight">DRK <span class="text-drk-500">Energía</span></h1>
+            <span class="text-xs bg-drk-800 px-2 py-1 rounded text-drk-100">Comparador Pro 2.0TD</span>
+        </div>
+    </div>
+
+    <div id="app" class="w-full max-w-lg mx-auto p-4 md:p-6 flex-grow">
+
+        <!-- VISTA 1: INICIO Y CARGA -->
+        <div id="initial-view" class="fade-in">
+            
+            <!-- SECCIÓN DE ADMINISTRACIÓN DE TARIFAS (PROTEGIDA) -->
+            <div class="mb-6">
+                <!-- Bloque de Cabecera y Contraseña -->
+                <div class="bg-white border border-slate-200 p-5 rounded-2xl shadow-sm relative overflow-hidden flex justify-between items-center transition" id="tariff-admin-header">
+                    <div class="absolute top-0 left-0 w-1 h-full bg-drk-500"></div>
+                    <div class="flex items-center gap-3">
+                        <!-- Icono de Candado (se actualiza con JS) -->
+                        <svg id="lock-icon" class="w-6 h-6 text-red-500 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <!-- Candado cerrado por defecto -->
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"></path>
+                            <path id="lock-chain" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 7v2a1 1 0 002 0V7a1 1 0 00-2 0z"></path>
+                        </svg>
+                        <div>
+                            <p class="font-bold text-slate-700 text-lg">Base de Datos de Tarifas (Admin)</p>
+                            <p class="text-sm text-slate-500 mt-1">Estado: <span id="tariff-count" class="font-bold text-drk-600">0 cargadas</span></p>
+                            <p class="text-xs text-slate-400">Fuente: Google Sheets</p>
+                        </div>
+                    </div>
+                    <!-- Input de Contraseña -->
+                    <input type="password" id="tariff-password-input" placeholder="Contraseña..." class="w-32 text-xs p-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-drk-500 outline-none">
+                </div>
+
+                <!-- Contenido de Gestión de Tarifas (Inicialmente Oculto) -->
+                <div id="tariff-management-content" class="hidden p-5 border border-t-0 border-slate-200 bg-white rounded-b-2xl shadow-sm -mt-3 pt-5">
+                    <div class="flex flex-col gap-2">
+                        <!-- Eliminamos input file y usamos solo el botón de carga desde la hoja -->
+                        <button id="load-tariffs-btn" class="w-full bg-drk-600 hover:bg-drk-800 text-white font-medium py-2.5 px-4 rounded-xl transition shadow-sm flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                            Recargar Tarifas desde Google Sheets
+                        </button>
+                        <div class="flex gap-2">
+                            <button id="reset-tariffs-btn" class="w-1/2 bg-white border border-slate-300 text-slate-600 hover:bg-slate-50 font-medium py-2 rounded-xl text-xs transition">
+                                Borrar Cache Local
+                            </button>
+                            <button onclick="document.getElementById('tariff-guide-modal').classList.remove('hidden');" class="w-1/2 text-drk-600 hover:underline text-xs font-medium text-center py-2">
+                                ¿Formato CSV esperado?
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Tarjeta de Acción Principal -->
+            <div class="bg-white p-6 rounded-3xl shadow-xl text-center border-t-4 border-drk-500">
+                <div class="w-16 h-16 bg-drk-50 rounded-full flex items-center justify-center mx-auto mb-4 text-drk-600">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
+                </div>
+                <h2 class="text-2xl font-bold text-slate-800 mb-2">Analizar Factura</h2>
+                <p class="text-slate-500 mb-6">Escanea el código QR de la factura de tu cliente para calcular el ahorro exacto en tiempo real.</p>
+                
+                <button id="start-scan-btn" class="w-full bg-gradient-to-r from-drk-600 to-drk-800 hover:from-drk-700 hover:to-drk-900 text-white font-bold py-4 px-6 rounded-2xl shadow-lg transform transition active:scale-95 flex items-center justify-center gap-3 mb-3">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.125 3h3.75a2 2 0 011.664.89l.812 1.22a2 2 0 001.664.89H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    <span>ESCANEAR QR AHORA</span>
+                </button>
+
+                <!-- NUEVO BOTÓN PARA SUBIR / PEGAR IMAGEN -->
+                <input type="file" id="image-file-input" accept="image/*" class="hidden">
+                <button id="upload-menu-btn" class="w-full bg-drk-50 hover:bg-drk-100 text-drk-700 font-bold py-3 px-6 rounded-xl shadow-sm transform transition active:scale-95 flex items-center justify-center gap-3">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1m-4-5l-1-1m0 0l-1-1m0 0l-1-1M12 12v.01"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                    <span>OPCIONES QR MANUAL</span>
+                </button>
+                <p id="loading-status" class="text-center text-sm text-slate-400 mt-4 hidden">Inicializando cámara...</p>
+            </div>
+
+             <!-- Simulación Manual (Colapsable o pequeña) -->
+             <div class="mt-8 pt-6 border-t border-slate-200">
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 text-center">Modo Manual / Pruebas</p>
+                <div class="flex gap-2">
+                    <input type="text" id="cups-input" placeholder="Pegar cadena QR CNMC..." class="w-full bg-white border border-slate-200 text-xs p-3 rounded-xl focus:ring-2 focus:ring-drk-500 outline-none">
+                    <button id="simulate-scan-btn" class="bg-slate-200 hover:bg-slate-300 text-slate-600 font-bold py-2 px-4 rounded-xl text-xs transition">
+                        Simular
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- VISTA 2: ESCÁNER -->
+        <div id="scanner-view" class="hidden flex-col h-full">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-bold text-slate-700">Escaneando Factura...</h2>
+                <button id="stop-scan-btn" class="text-red-500 font-bold text-sm bg-red-50 px-3 py-1 rounded-lg">Cancelar</button>
+            </div>
+            
+            <div class="relative w-full aspect-[3/4] bg-black rounded-2xl overflow-hidden shadow-2xl mb-4">
+                <div id="interactive" class="viewport w-full h-full"></div>
+                <!-- Guía visual de escaneo -->
+                <div class="absolute inset-0 border-2 border-drk-500 opacity-50 m-8 rounded-lg pointer-events-none"></div>
+                <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <div class="w-64 h-1 bg-red-500 opacity-50"></div>
+                </div>
+            </div>
+
+            <p id="scan-message" class="text-center text-sm text-slate-500 mb-4">Enfoca el código QR de la CNMC.</p>
+            
+            <button id="capture-photo-btn" class="w-full bg-white border-2 border-drk-500 text-drk-700 font-bold py-3 rounded-xl shadow-sm flex items-center justify-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.125 3h3.75a2 2 0 011.664.89l.812 1.22a2 2 0 001.664.89H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                Capturar Foto Manualmente
+            </button>
+        </div>
+
+        <!-- VISTA 3: RESULTADOS (DISEÑO PREMIUM) -->
+        <div id="results-view" class="hidden animate-fade-in-up">
+            
+            <!-- Encabezado Resultados -->
+            <div class="text-center mb-6">
+                <div class="inline-flex items-center gap-2 bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-bold mb-2">
+                    <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span> Análisis Completado
+                </div>
+                <h2 class="text-2xl font-black text-slate-800">Resultado del Estudio</h2>
+                <p class="text-sm text-slate-500">CUPS: <span id="cups-value" class="font-mono text-slate-700"></span></p>
+            </div>
+
+            <!-- TARJETA PRINCIPAL: COMPARATIVA DE AHORRO -->
+            <div class="bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-100 mb-8 relative">
+                <!-- Header Degradado -->
+                <div class="bg-gradient-to-r from-drk-800 to-drk-600 p-6 text-white text-center relative overflow-hidden">
+                    <div class="absolute top-0 right-0 p-4 opacity-10">
+                        <svg class="w-24 h-24" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z"/></svg>
+                    </div>
+                    <p class="uppercase tracking-widest text-xs font-semibold text-drk-100 mb-1">LA MEJOR OPCIÓN PARA TI ES</p>
+                    <h2 id="best-offer-name" class="text-2xl md:text-3xl font-extrabold leading-tight mb-2">Nombre Tarifa</h2>
+                    <p id="best-offer-desc" class="text-drk-100 text-sm opacity-90">Descripción de la tarifa</p>
+                </div>
+
+                <!-- Cuerpo de Comparación: ACTUALIZADO PARA MOSTRAR MES/AÑO -->
+                <div class="p-6">
+                    <div class="flex flex-col gap-6">
+                        
+                        <!-- Bloque Visual de Comparación Ahorro -->
+                        <div class="flex flex-col items-center justify-center gap-4 bg-slate-50 rounded-2xl p-6 border border-slate-200">
+                            
+                            <!-- Ahorro Grande -->
+                            <div class="text-center">
+                                <p class="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">Tu Ahorro Anual Estimado</p>
+                                <p id="savings-estimate" class="text-5xl font-black text-green-500 tracking-tight">- €</p>
+                            </div>
+                        </div>
+
+                        <!-- Detalle Coste Mes vs Año -->
+                        <div class="w-full grid grid-cols-2 text-center text-sm border-b pb-4 border-slate-100">
+                            <!-- Columna Coste Actual (Actualizado) -->
+                            <div class="border-r border-slate-200 pr-2">
+                                <p class="text-slate-400 text-xs font-semibold mb-2 uppercase">TU FACTURA ACTUAL</p>
+                                
+                                <div class="mb-3">
+                                    <p class="text-xl font-bold text-red-400 line-through decoration-red-400/50 decoration-2" id="old-period-cost-display">0,00 €</p> <!-- Valor real de la factura -->
+                                    <p class="text-xs text-slate-500 font-medium" id="old-period-days-label">Total Periodo (XX días)</p> 
+                                </div>
+                                
+                                <div>
+                                    <p class="text-lg font-bold text-red-500 line-through decoration-red-500/50 decoration-2" id="old-annual-cost-display">0,00 €/año</p>
+                                    <p class="text-xs text-slate-500 font-medium">Proyección Anual</p>
+                                </div>
+                            </div>
+
+                            <!-- Columna Coste DRK (Nuevo) - Mantenemos Mes/Año -->
+                            <div class="pl-2">
+                                <p class="text-drk-600 text-xs font-semibold mb-2 uppercase">TU NUEVO COSTE DRK</p>
+                                
+                                <div class="mb-3">
+                                    <p class="text-2xl font-black text-drk-800" id="new-monthly-cost-display">0,00 €/mes</p>
+                                    <p class="text-xs text-drk-600 font-medium">Estimado Mensual</p>
+                                </div>
+                                
+                                <div>
+                                    <p class="text-2xl font-black text-drk-800" id="new-annual-cost-display">0,00 €/año</p>
+                                    <p class="text-xs text-drk-600 font-medium">Proyección Anual</p>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botones de Acción -->
+            <div class="grid grid-cols-1 gap-3 mb-8">
+                 <!-- Botón para ver desglose (Toggle) -->
+                 <button onclick="document.getElementById('details-container').classList.toggle('hidden')" class="text-center text-drk-600 font-bold text-sm hover:underline flex items-center justify-center gap-1">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    Ver desglose detallado del cálculo
+                </button>
+            </div>
+
+            <!-- Contenedor de Detalles (Oculto por defecto o visible, a tu elección) -->
+            <div id="details-container" class="hidden space-y-6">
+                
+                <h3 class="text-lg font-bold text-slate-800 border-l-4 border-drk-500 pl-3">Datos Extraídos de Factura</h3>
+                <div id="user-consumption-details" class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm text-sm">
+                    <!-- Se llena con JS -->
+                </div>
+
+                <h3 class="text-lg font-bold text-slate-800 border-l-4 border-green-500 pl-3">Cálculo Oficial de la Oferta</h3>
+                <div id="cost-breakdown" class="bg-white p-0 rounded-xl border border-slate-200 shadow-sm overflow-hidden text-sm">
+                    <!-- Se llena con JS -->
+                </div>
+
+                <!-- Debug: Comparación Técnica -->
+                <div id="comparison-details" class="hidden"></div> 
+            </div>
+
+            <div class="mt-8">
+                <button onclick="resetApp()" class="w-full bg-white border-2 border-slate-200 hover:border-drk-500 text-slate-600 hover:text-drk-600 font-bold py-4 rounded-xl transition flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                    Realizar Nueva Comparación
+                </button>
+            </div>
+
+        </div>
+        
+        <!-- MODAL DE OPCIONES QR MANUALES -->
+        <div id="qr-options-modal" class="fixed inset-0 bg-black/80 hidden items-center justify-center p-4 z-50 backdrop-blur-sm">
+            <div class="bg-white p-6 rounded-2xl shadow-2xl max-w-sm w-full">
+                <h3 class="text-xl font-bold text-drk-800 mb-4">Seleccione Opción QR</h3>
+                
+                <!-- Botón Subir Archivo (Opción 1) -->
+                <button id="modal-upload-file-btn" class="w-full bg-drk-600 hover:bg-drk-800 text-white font-bold py-3 px-6 rounded-xl shadow-md transform transition active:scale-95 flex items-center justify-center gap-3 mb-3">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                    Subir Imagen (Archivo)
+                </button>
+
+                <!-- Botón Pegar Imagen (Opción 2) -->
+                <button id="modal-paste-image-btn" class="w-full bg-drk-500 hover:bg-drk-600 text-white font-bold py-3 px-6 rounded-xl shadow-md transform transition active:scale-95 flex items-center justify-center gap-3 mb-4">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                    Pegar Imagen (CTRL+V)
+                </button>
+
+                <button onclick="document.getElementById('qr-options-modal').classList.add('hidden');" class="w-full bg-slate-200 hover:bg-slate-300 text-slate-600 font-bold py-3 rounded-xl">
+                    Cancelar
+                </button>
+                
+                <!-- Área oculta para capturar el pegado de imagen -->
+                <textarea id="paste-catcher" class="opacity-0 w-0 h-0 absolute -z-10" aria-hidden="true"></textarea>
+
+            </div>
+        </div>
+
+
+        <!-- MODALES (Error y Guía) -->
+        <div id="error-modal" class="fixed inset-0 bg-black/80 hidden items-center justify-center p-4 z-50 backdrop-blur-sm">
+            <div class="bg-white p-6 rounded-2xl shadow-2xl max-w-sm w-full text-center">
+                <div class="w-12 h-12 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4" id="error-icon">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </div>
+                <h3 class="text-lg font-bold text-slate-800 mb-2" id="error-title">¡Ups! Algo salió mal</h3>
+                <p id="error-message" class="text-slate-600 text-sm mb-6"></p>
+                <button onclick="hideErrorModal()" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 rounded-xl">Entendido</button>
+            </div>
+        </div>
+
+        <div id="tariff-guide-modal" class="fixed inset-0 bg-black/80 hidden items-center justify-center p-4 z-50 backdrop-blur-sm">
+            <div class="bg-white p-6 rounded-2xl shadow-2xl max-w-lg w-full">
+                <h3 class="text-xl font-bold text-drk-800 mb-4">Formato CSV Esperado</h3>
+                <div class="bg-slate-100 p-3 rounded-lg overflow-x-auto text-xs font-mono mb-4 text-slate-700">
+                    name, description, p1_price, p2_price, p3_price, p_potencia_1, p_potencia_2
+                </div>
+                <p class="text-xs text-slate-500 mb-4">La Hoja de Google Sheets debe tener estas cabeceras en la primera fila y estar compartida como 'Público'.</p>
+                <button onclick="document.getElementById('tariff-guide-modal').classList.add('hidden');" class="w-full bg-drk-600 hover:bg-drk-700 text-white font-bold py-3 rounded-xl">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPT PRINCIPAL -->
+    <script>
+        // --- CONFIGURACIÓN DE GOOGLE SHEETS ---
+        // ID de la hoja: 13JrbK1T4x5W-2U7KPFprCXMl-FxizxofPA5w8MINyak
+        // GID para la primera pestaña (Hoja1) = 0
+        const SHEET_ID = '13JrbK1T4x5W-2U7KPFprCXMl-FxizxofPA5w8MINyak';
+        const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=0`;
+        // ------------------------------------
+
+        // CONSTANTES GLOBALES
+        const ANNUAL_DAYS = 365;
+        const LOCAL_STORAGE_KEY = 'drk_loaded_tariffs';
+        const TARIFF_PASSWORD = "DRK12345678&"; // Contraseña de administración
+
+        // VARIABLES DE ESTADO
+        let currentTariffs = [];
+        let scannerRunning = false;
+        let stream = null, video = null, canvas = null, canvasCtx = null, animationFrameId = null;
+
+        // ELEMENTOS DOM
+        const els = {
+            initialView: document.getElementById('initial-view'),
+            resultsView: document.getElementById('results-view'),
+            scannerView: document.getElementById('scanner-view'),
+            interactiveViewport: document.getElementById('interactive'),
+            startScanBtn: document.getElementById('start-scan-btn'),
+            stopScanBtn: document.getElementById('stop-scan-btn'),
+            capturePhotoBtn: document.getElementById('capture-photo-btn'),
+            loadingStatus: document.getElementById('loading-status'),
+            simulateScanBtn: document.getElementById('simulate-scan-btn'),
+            cupsInput: document.getElementById('cups-input'),
+            
+            // Elementos de Admin/Contraseña
+            tariffPasswordInput: document.getElementById('tariff-password-input'),
+            tariffManagementContent: document.getElementById('tariff-management-content'),
+            lockIcon: document.getElementById('lock-icon'),
+            tariffAdminHeader: document.getElementById('tariff-admin-header'),
+            loadTariffsBtn: document.getElementById('load-tariffs-btn'),
+            resetTariffsBtn: document.getElementById('reset-tariffs-btn'),
+            tariffCountSpan: document.getElementById('tariff-count'),
+
+            // Elementos para subir imagen/modal
+            uploadMenuBtn: document.getElementById('upload-menu-btn'),
+            imageFileInput: document.getElementById('image-file-input'),
+            qrOptionsModal: document.getElementById('qr-options-modal'),
+            modalUploadFileBtn: document.getElementById('modal-upload-file-btn'),
+            modalPasteImageBtn: document.getElementById('modal-paste-image-btn'), 
+            pasteCatcher: document.getElementById('paste-catcher'), 
+            
+            // Elementos de resultados
+            bestOfferName: document.getElementById('best-offer-name'),
+            bestOfferDesc: document.getElementById('best-offer-desc'),
+            savingsEstimate: document.getElementById('savings-estimate'),
+            oldAnnualCostDisplay: document.getElementById('old-annual-cost-display'),
+            newAnnualCostDisplay: document.getElementById('new-annual-cost-display'),
+            oldPeriodCostDisplay: document.getElementById('old-period-cost-display'), 
+            oldPeriodDaysLabel: document.getElementById('old-period-days-label'), 
+            newMonthlyCostDisplay: document.getElementById('new-monthly-cost-display'), 
+            cupsValue: document.getElementById('cups-value'),
+            userConsumptionDetails: document.getElementById('user-consumption-details'),
+            costBreakdown: document.getElementById('cost-breakdown')
+        };
+
+        // --- GESTIÓN DE TARIFAS Y PERSISTENCIA (CACHE LOCAL) ---
+
+        function updateTariffCount() {
+            els.tariffCountSpan.textContent = `${currentTariffs.length} cargadas`;
+            if (currentTariffs.length > 0) {
+                els.tariffCountSpan.classList.remove('text-slate-400');
+                els.tariffCountSpan.classList.add('text-green-600');
+                els.loadingStatus.classList.add('hidden');
+            } else {
+                els.tariffCountSpan.classList.add('text-slate-400');
+                els.tariffCountSpan.classList.remove('text-green-600');
+                els.loadingStatus.textContent = "Error: No hay tarifas disponibles.";
+                els.loadingStatus.classList.remove('hidden');
+            }
+        }
+
+        function loadTariffsFromStorage() {
+            try {
+                const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
+                if (stored) return JSON.parse(stored);
+            } catch (e) { console.error("Storage Error", e); }
+            return [];
+        }
+
+        function saveTariffsToStorage(tariffs) {
+            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(tariffs));
+        }
+
+        function resetTariffs() {
+            currentTariffs = [];
+            localStorage.removeItem(LOCAL_STORAGE_KEY);
+            updateTariffCount();
+            window.showMessageModal("Caché local de tarifas borrada. Se intentará recargar desde Google Sheets.");
+            
+            // Bloquear automáticamente después de resetear
+            els.tariffPasswordInput.value = '';
+            toggleTariffManagement(false);
+            fetchTariffsFromSheet(true); // Intentar recargar después de borrar
+        }
+
+        // --- LÓGICA DE CARGA DIRECTA DESDE GOOGLE SHEETS ---
+
+        function parseCSV(text) {
+            const lines = text.trim().split('\n');
+            if (lines.length < 2) throw new Error("Archivo CSV vacío o sin datos de tarifas.");
+            
+            // Diagnóstico de error de Google Sheets (No CSV devuelto, sino HTML de error/acceso)
+            if (lines[0].toLowerCase().includes('<html') || lines[0].toLowerCase().includes('doc.title')) { 
+                 throw new Error("Error de acceso o formato. Asegúrese de que la hoja sea 'Pública'.");
+            }
+            
+            let rawHeaders = lines[0].trim();
+            // Forzamos el separador coma, que es el que usa Google Sheets
+            const delimiter = ','; 
+            // Limpiamos comillas y convertimos a minúsculas
+            const headers = rawHeaders.split(delimiter).map(h => h.trim().toLowerCase().replace(/"/g, ''));
+            
+            const requiredHeaders = ['name', 'description', 'p1_price', 'p2_price', 'p3_price', 'p_potencia_1', 'p_potencia_2'];
+            
+            // Revisar si faltan cabeceras
+            const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
+            if (missingHeaders.length > 0) {
+                throw new Error(`Faltan cabeceras requeridas: ${missingHeaders.join(', ')}. Las cabeceras detectadas son: ${headers.join(', ')}.`);
+            }
+
+            const newTariffs = [];
+            for (let i = 1; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (!line) continue;
+
+                // --- FIX: Lógica robusta de split que respeta comillas ---
+                // Necesario porque el valor decimal es ',' que coincide con el separador de campo.
+                const values = [];
+                let current = '';
+                let inQuotes = false;
+                
+                for (let k = 0; k < line.length; k++) {
+                    const char = line[k];
+
+                    if (char === '"' && line[k+1] !== '"') { // Ignorar comillas dobles escapadas (CSV estándar)
+                        inQuotes = !inQuotes;
+                    } else if (char === delimiter && !inQuotes) {
+                        values.push(current);
+                        current = '';
+                    } else {
+                        current += char;
+                    }
+                }
+                values.push(current); // Último item
+                // --- FIN FIX: Lógica robusta de split ---
+
+                if (values.length !== headers.length) {
+                    console.warn(`Saltando línea ${i} debido a conteo de columnas incorrecto: ${values.length} vs ${headers.length}. Línea: ${line}`);
+                    continue;
+                }
+                
+                const tariff = { cups_match: ["2.0TD"] };
+                let isValidTariff = true;
+                
+                for (let j = 0; j < headers.length; j++) {
+                    const header = headers[j];
+                    // Quitar las comillas de inicio/fin y espacios.
+                    const value = values[j].trim().replace(/^"|"$/g, '').replace(/""/g, '"'); 
+                    
+                    if (header.includes('price') || header.includes('potencia')) {
+                        // FIX: Sustitución de coma decimal por punto, ESENCIAL para parseFloat
+                        const numValue = parseFloat(value.replace(',', '.')); 
+                        if (!isNaN(numValue)) {
+                            if (header.includes('potencia') && numValue < 1.0 && numValue > 0) {
+                                tariff[header] = numValue * ANNUAL_DAYS;
+                            } else {
+                                tariff[header] = numValue;
+                            }
+                        } else {
+                             // Si no es un número válido, marcamos la fila como inválida
+                             isValidTariff = false;
+                             break;
+                        }
+                    } else {
+                        tariff[header] = value;
+                    }
+                }
+                
+                if (isValidTariff && tariff.p1_price !== undefined) {
+                    newTariffs.push(tariff);
+                }
+            }
+            return newTariffs;
+        }
+
+
+        async function fetchTariffsFromSheet(isManual = false) {
+            if (!isManual) {
+                els.loadingStatus.textContent = "Cargando tarifas (Intentando desde Google Sheets)...";
+                els.loadingStatus.classList.remove('hidden');
+            }
+            
+            let csvText = '';
+            try {
+                const response = await fetch(SHEET_URL);
+
+                if (!response.ok) {
+                    throw new Error(`Fallo en la conexión (${response.status} ${response.statusText}).`);
+                }
+
+                csvText = await response.text();
+                const loaded = parseCSV(csvText);
+
+                if (loaded.length === 0) {
+                    throw new Error("No se encontraron tarifas válidas después del parseo.");
+                }
+                
+                currentTariffs = loaded;
+                saveTariffsToStorage(currentTariffs);
+                updateTariffCount();
+                
+                if (isManual) {
+                    window.showMessageModal(`¡Éxito! ${currentTariffs.length} tarifas recargadas desde Google Sheets.`);
+                }
+                
+            } catch (err) {
+                console.error("Error diagnóstico (Recepción de datos):", csvText || "Respuesta vacía o fallida.");
+                
+                const cachedTariffs = loadTariffsFromStorage();
+                currentTariffs = cachedTariffs;
+                updateTariffCount();
+
+                if (cachedTariffs.length > 0) {
+                    window.showErrorModal(`ALERTA: Falló la carga desde Google Sheets. Usando ${cachedTariffs.length} tarifas de la caché local. (Error: ${err.message})`);
+                } else {
+                    window.showErrorModal(`Error al conectar con Google Sheets y no hay caché local: ${err.message}.`);
+                }
+            } finally {
+                if (!isManual) {
+                    els.loadingStatus.classList.add('hidden');
+                }
+            }
+        }
+
+        // --- LÓGICA DE BLOQUEO/DESBLOQUEO ---
+
+        function toggleTariffManagement(isUnlocked) {
+            if (isUnlocked) {
+                els.tariffManagementContent.classList.remove('hidden');
+                els.lockIcon.classList.remove('text-red-500');
+                els.lockIcon.classList.add('text-green-500');
+                els.lockIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0v4m-5 4h2m-2 4h2m2 4h-2a2 2 0 01-2-2v-6a2 2 0 012-2h4a2 2 0 012 2v6a2 2 0 01-2 2zM12 18h.01"></path>';
+                els.tariffAdminHeader.classList.add('rounded-b-none');
+                els.tariffPasswordInput.style.backgroundColor = '#d1fae5';
+            } else {
+                els.tariffManagementContent.classList.add('hidden');
+                els.lockIcon.classList.add('text-red-500');
+                els.lockIcon.classList.remove('text-green-500');
+                els.lockIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"></path><path id="lock-chain" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 7v2a1 1 0 002 0V7a1 1 0 00-2 0z"></path>';
+                els.tariffAdminHeader.classList.remove('rounded-b-none');
+                els.tariffPasswordInput.style.backgroundColor = '';
+            }
+        }
+
+        function handlePasswordInput() {
+            const password = els.tariffPasswordInput.value;
+            const isUnlocked = password === TARIFF_PASSWORD;
+            toggleTariffManagement(isUnlocked);
+        }
+
+        // --- GESTIÓN DE VISTAS Y ERRORES ---
+
+        function showView(viewId) {
+            els.initialView.classList.add('hidden');
+            els.resultsView.classList.add('hidden');
+            els.scannerView.classList.add('hidden');
+            els.resultsView.classList.remove('animate-fade-in-up'); 
+            
+            const target = document.getElementById(viewId);
+            target.classList.remove('hidden');
+            if(viewId === 'results-view') target.classList.add('animate-fade-in-up');
+        }
+
+        window.showErrorModal = (msg) => {
+            document.getElementById('error-title').textContent = "¡Ups! Algo salió mal";
+            document.getElementById('error-icon').className = "w-12 h-12 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4";
+            document.getElementById('error-icon').innerHTML = '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>';
+            document.getElementById('error-message').textContent = msg;
+            document.getElementById('error-modal').classList.remove('hidden');
+            document.getElementById('error-modal').classList.add('flex');
+        }
+
+        window.showMessageModal = (msg) => {
+             document.getElementById('error-title').textContent = "Operación Exitosa";
+             document.getElementById('error-icon').className = "w-12 h-12 bg-drk-100 text-drk-500 rounded-full flex items-center justify-center mx-auto mb-4";
+             document.getElementById('error-icon').innerHTML = '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>';
+             document.getElementById('error-message').textContent = msg;
+             document.getElementById('error-modal').classList.remove('hidden');
+             document.getElementById('error-modal').classList.add('flex');
+        }
+
+        window.hideErrorModal = () => {
+            document.getElementById('error-modal').classList.add('hidden');
+            document.getElementById('error-modal').classList.remove('flex');
+            document.getElementById('error-title').textContent = "¡Ups! Algo salió mal";
+            document.getElementById('error-icon').className = "w-12 h-12 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4";
+        }
+
+        window.resetApp = () => {
+            stopScanner();
+            showView('initial-view');
+            els.loadingStatus.classList.add('hidden');
+            els.startScanBtn.disabled = false;
+            els.uploadMenuBtn.disabled = false; 
+        };
+
+        // --- MANEJO DE IMAGEN Y TEXTO QR ---
+
+        function handleImageForQR(imageFile) {
+            if (currentTariffs.length === 0) {
+                return window.showErrorModal("Primero debe cargar las tarifas (o esperar a que se carguen desde Google Sheets).");
+            }
+
+            processImageForQR(imageFile);
+            els.imageFileInput.value = '';
+        }
+        
+        function handleImageUpload(event) {
+            els.qrOptionsModal.classList.add('hidden');
+            const file = event.target.files[0];
+            if (!file) return;
+            handleImageForQR(file);
+        }
+
+        function processImageForQR(file) {
+            els.loadingStatus.textContent = "Procesando imagen...";
+            els.loadingStatus.classList.remove('hidden');
+            els.startScanBtn.disabled = true;
+            els.uploadMenuBtn.disabled = true;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    const tempCanvas = document.createElement('canvas');
+                    const tempCtx = tempCanvas.getContext('2d');
+                    
+                    let { width, height } = img;
+                    const max_dim = 1000;
+                    if (width > max_dim || height > max_dim) {
+                        const ratio = Math.min(max_dim / width, max_dim / height);
+                        width *= ratio;
+                        height *= ratio;
+                    }
+
+                    tempCanvas.width = width;
+                    tempCanvas.height = height;
+                    tempCtx.drawImage(img, 0, 0, width, height);
+
+                    try {
+                        const imageData = tempCtx.getImageData(0, 0, width, height);
+                        const code = jsQR(imageData.data, imageData.width, imageData.height);
+                        
+                        els.loadingStatus.classList.add('hidden');
+                        els.startScanBtn.disabled = false;
+                        els.uploadMenuBtn.disabled = false;
+
+                        if (code) {
+                            handleQRRead(code.data);
+                        } else {
+                            window.showErrorModal("No se pudo detectar el código QR en la imagen. Asegúrese de que el código esté claro y sin reflejos.");
+                        }
+                    } catch (error) {
+                        els.loadingStatus.classList.add('hidden');
+                        els.startScanBtn.disabled = false;
+                        els.uploadMenuBtn.disabled = false;
+                        console.error("Error al procesar la imagen para QR:", error);
+                        window.showErrorModal("Error interno al escanear la imagen.");
+                    }
+                };
+                img.onerror = () => {
+                    els.loadingStatus.classList.add('hidden');
+                    els.startScanBtn.disabled = false;
+                    els.uploadMenuBtn.disabled = false;
+                    window.showErrorModal("Error al cargar la imagen. ¿Es un formato válido?");
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        function setupPasteCatcher() {
+            document.addEventListener('paste', (e) => {
+                if (els.qrOptionsModal.classList.contains('hidden') || !els.pasteCatcher.matches(':focus')) return;
+
+                const items = e.clipboardData.items;
+                for (let i = 0; i < items.length; i++) {
+                    if (items[i].type.indexOf('image') !== -1) {
+                        const blob = items[i].getAsFile();
+                        if (blob) {
+                            els.qrOptionsModal.classList.add('hidden');
+                            e.preventDefault();
+                            handleImageForQR(blob);
+                            break;
+                        }
+                    }
+                }
+            });
+
+            els.modalPasteImageBtn.addEventListener('click', () => {
+                els.pasteCatcher.focus();
+                window.showMessageModal("Presione CTRL+V (o Comando+V) para pegar la imagen en esta ventana.");
+                setTimeout(hideErrorModal, 5000); 
+            });
+        }
+
+
+        // --- LÓGICA DE ESCANEO (jsQR) ---
+
+        function startScanner() {
+            if (currentTariffs.length === 0) return window.showErrorModal("Primero debe cargar las tarifas (o esperar a que se carguen desde Google Sheets).");
+            if (scannerRunning) return;
+            
+            showView('scanner-view');
+            scannerRunning = true;
+            
+            video = document.createElement('video');
+            video.autoplay = true;
+            video.playsInline = true;
+            canvas = document.createElement('canvas');
+            canvasCtx = canvas.getContext('2d');
+            
+            els.interactiveViewport.innerHTML = '';
+            els.interactiveViewport.appendChild(video);
+
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+                .then(s => {
+                    stream = s;
+                    video.srcObject = stream;
+                    video.onloadedmetadata = () => { video.play(); scanLoop(); };
+                })
+                .catch(err => {
+                    console.error(err);
+                    stopScanner();
+                    window.showErrorModal("No se pudo acceder a la cámara.");
+                    window.resetApp();
+                });
+        }
+
+        function scanLoop() {
+            if (!scannerRunning || !video || video.readyState !== video.HAVE_ENOUGH_DATA) {
+                animationFrameId = requestAnimationFrame(scanLoop);
+                return;
+            }
+            if (canvas.width !== video.videoWidth) {
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+            }
+            canvasCtx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const imageData = canvasCtx.getImageData(0, 0, canvas.width, canvas.height);
+            const code = jsQR(imageData.data, imageData.width, imageData.height);
+            if (code) {
+                stopScanner();
+                handleQRRead(code.data);
+            } else {
+                animationFrameId = requestAnimationFrame(scanLoop);
+            }
+        }
+
+        function stopScanner() {
+            scannerRunning = false;
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            if (stream) stream.getTracks().forEach(t => t.stop());
+            video = null;
+        }
+
+        function capturePhoto() {
+            if (!video || video.readyState !== video.HAVE_ENOUGH_DATA) return;
+            canvasCtx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const imageData = canvasCtx.getImageData(0, 0, canvas.width, canvas.height);
+            const code = jsQR(imageData.data, imageData.width, imageData.height);
+            if (code) {
+                stopScanner();
+                handleQRRead(code.data);
+            } else {
+                window.showErrorModal("No se detectó QR en la imagen. Intente acercarse más.");
+            }
+        }
+
+        // --- LÓGICA DE PARSEO Y CÁLCULO ---
+
+        function dateDiffInDays(d1, d2) {
+            const parse = (str) => {
+                if (!str || str.length !== 10) return null;
+                if (str.includes('/')) {
+                    const p = str.split('/');
+                    // Intentar parsear DD/MM/YYYY
+                    return new Date(p[2], p[1]-1, p[0]);
+                }
+                if (str.includes('-')) {
+                    // Intentar parsear YYYY-MM-DD
+                    const p = str.split('-');
+                    return new Date(p[0], p[1]-1, p[2]);
+                }
+                if (str.length === 8) { // YYYYMMDD
+                    const year = str.substring(0, 4);
+                    const month = str.substring(4, 6);
+                    const day = str.substring(6, 8);
+                    return new Date(year, month-1, day);
+                }
+                return null;
+            }
+            const dt1 = parse(d1);
+            const dt2 = parse(d2);
+            if(!dt1 || !dt2) return 0;
+            return Math.ceil(Math.abs(dt2 - dt1) / (1000 * 60 * 60 * 24)) + 1;
+        }
+
+        function handleQRRead(raw) {
+            // Limpieza básica
+            if (raw.includes('?')) raw = raw.split('?')[1] || raw;
+            
+            const p = {};
+            raw.split('&').forEach(part => {
+                const [k, v] = part.split('=');
+                if(k) p[k] = decodeURIComponent(v||'').replace(',', '.');
+            });
+
+            // Parseo de datos CNMC
+            const data = {
+                cups: p.cups || 'No detectado',
+                dias_facturados: dateDiffInDays(p.iniF, p.finF),
+                consumo_punta: parseFloat(p.cfP1||0),
+                consumo_llano: parseFloat(p.cfP2||0),
+                consumo_valle: parseFloat(p.cfP3||0),
+                consumo_total: parseFloat(p.cfP1||0)+parseFloat(p.cfP2||0)+parseFloat(p.cfP3||0),
+                potencia_p1_kw: parseFloat(p.pP1||0),
+                potencia_p2_kw: parseFloat(p.pP2||0),
+                // USAMOS el importe total (imp) que viene con impuestos, para reflejar el valor real de la factura del cliente
+                importe_total: parseFloat(p.imp||0), 
+                fechas: `${p.iniF || '?'} - ${p.finF || '?'}`
+            };
+
+            if (data.dias_facturados === 0 || data.importe_total === 0) {
+                window.showErrorModal("QR incompleto. No se encontraron fechas o importes válidos.");
+                window.resetApp();
+                return;
+            }
+
+            compareOffers(data);
+        }
+
+        function compareOffers(data) {
+            const IVA_RATE = 0.21;
+            const IE_RATE = 0.05113; // Ajustado a valor típico
+
+            // Factor anualización
+            const factorAnual = ANNUAL_DAYS / data.dias_facturados;
+            const originalBillAnnual = data.importe_total * factorAnual; 
+
+            let bestOffer = null;
+            let minAnnualCost = Infinity;
+            let bestBreakdown = null;
+
+            currentTariffs.forEach(t => {
+                // Cálculo Potencia (Potencia en €/kW año, lo dividimos por días para obtener €/kW día)
+                const priceP1Day = t.p_potencia_1 / ANNUAL_DAYS;
+                const priceP2Day = t.p_potencia_2 / ANNUAL_DAYS;
+                
+                const costP1 = data.potencia_p1_kw * data.dias_facturados * priceP1Day;
+                const costP2 = data.potencia_p2_kw * data.dias_facturados * priceP2Day;
+                const subPower = costP1 + costP2;
+
+                // Cálculo Energía (Precios en €/kWh)
+                const costE1 = data.consumo_punta * t.p1_price;
+                const costE2 = data.consumo_llano * t.p2_price;
+                const costE3 = data.consumo_valle * t.p3_price;
+                const subEnergy = costE1 + costE2 + costE3;
+
+                // Impuestos
+                const subBase = subPower + subEnergy;
+                const costIE = subBase * IE_RATE;
+                const baseImp = subBase + costIE;
+                const costIVA = baseImp * IVA_RATE;
+                
+                const totalPeriod = baseImp + costIVA; // Coste DRK para el periodo exacto de la factura
+                const totalAnnual = totalPeriod * factorAnual; // Proyección Anual DRK
+
+                if (totalAnnual < minAnnualCost) {
+                    minAnnualCost = totalAnnual;
+                    bestOffer = t;
+                    bestBreakdown = {
+                        ...data, costP1, costP2, subPower, costE1, costE2, costE3, subEnergy,
+                        subBase, costIE, baseImp, costIVA, totalPeriod, totalAnnual,
+                        priceP1Day, priceP2Day, IE_RATE
+                    };
+                }
+            });
+
+            if (!bestOffer) return window.showErrorModal("No se encontraron tarifas compatibles con su perfil (2.0TD).");
+
+            const savings = originalBillAnnual - minAnnualCost;
+
+            // RENDERIZADO DE RESULTADOS
+            renderResultsUI(bestOffer, bestBreakdown, savings, originalBillAnnual);
+            showView('results-view');
+        }
+
+        function renderResultsUI(offer, bd, savings, oldAnnual) {
+            const oldPeriodCost = bd.importe_total;
+            const newMonthlyCost = bd.totalAnnual / 12;
+
+            const eur = (n) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(n);
+            const num = (n, d=2) => new Intl.NumberFormat('es-ES', { minimumFractionDigits: d, maximumFractionDigits: d }).format(n);
+
+            // 1. Datos básicos
+            els.cupsValue.textContent = bd.cups;
+            els.bestOfferName.textContent = offer.name;
+            els.bestOfferDesc.textContent = offer.description;
+            
+            // 2. Bloque Comparativo 
+            els.savingsEstimate.textContent = eur(savings);
+            els.savingsEstimate.className = savings >= 0 ? "text-5xl font-black text-green-500 tracking-tight" : "text-5xl font-black text-red-500 tracking-tight";
+            
+            // Coste Actual (Factura del cliente)
+            els.oldPeriodCostDisplay.textContent = eur(oldPeriodCost);
+            els.oldPeriodDaysLabel.textContent = `Total Periodo (${bd.dias_facturados} días)`;
+            els.oldAnnualCostDisplay.textContent = eur(oldAnnual) + "/año";
+            
+            // Coste Nuevo DRK
+            els.newMonthlyCostDisplay.textContent = eur(newMonthlyCost) + "/mes";
+            els.newAnnualCostDisplay.textContent = eur(bd.totalAnnual) + "/año";
+
+            // 3. Detalles de Consumo
+            els.userConsumptionDetails.innerHTML = `
+                <div class="grid grid-cols-2 gap-4">
+                    <div><p class="text-xs text-slate-500">Periodo</p><p class="font-bold text-slate-700">${bd.dias_facturados} días</p></div>
+                    <div><p class="text-xs text-slate-500">Fechas</p><p class="font-bold text-slate-700">${bd.fechas}</p></div>
+                    <div class="col-span-2 border-t pt-2 mt-2">
+                        <div class="flex justify-between text-xs mb-1"><span>E1 (Punta)</span><span class="font-mono">${num(bd.consumo_punta,0)} kWh</span></div>
+                        <div class="flex justify-between text-xs mb-1"><span>E2 (Llano)</span><span class="font-mono">${num(bd.consumo_llano,0)} kWh</span></div>
+                        <div class="flex justify-between text-xs mb-1"><span>E3 (Valle)</span><span class="font-mono">${num(bd.consumo_valle,0)} kWh</span></div>
+                        <div class="flex justify-between font-bold text-drk-600 mt-1"><span>Total Energía</span><span>${num(bd.consumo_total,0)} kWh</span></div>
+                    </div>
+                </div>
+            `;
+
+            // 4. Desglose Tipo Ticket
+            els.costBreakdown.innerHTML = `
+                <div class="bg-white p-6 font-mono text-xs md:text-sm text-slate-600 leading-relaxed">
+                    <div class="text-center border-b-2 border-dashed border-slate-300 pb-4 mb-4">
+                        <h4 class="font-bold text-lg text-slate-800 uppercase">${offer.name}</h4>
+                        <p>Simulación para ${bd.dias_facturados} días</p>
+                    </div>
+
+                    <!-- Potencia -->
+                    <div class="mb-4">
+                        <p class="font-bold text-slate-800 mb-1">TÉRMINO POTENCIA (Precio en €/kW Año)</p>
+                        <div class="flex justify-between">
+                            <span>P1 (${num(bd.potencia_p1_kw,2)} kW x ${bd.dias_facturados}d x ${num(bd.priceP1Day,6)})</span>
+                            <span>${num(bd.costP1,2)} €</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>P2 (${num(bd.potencia_p2_kw,2)} kW x ${bd.dias_facturados}d x ${num(bd.priceP2Day,6)})</span>
+                            <span>${num(bd.costP2,2)} €</span>
+                        </div>
+                    </div>
+
+                    <!-- Energía -->
+                    <div class="mb-4">
+                        <p class="font-bold text-slate-800 mb-1">TÉRMINO ENERGÍA (Precios en €/kWh)</p>
+                        <div class="flex justify-between"><span>E1 (${num(bd.consumo_punta,0)} kWh x ${num(offer.p1_price,6)})</span><span>${num(bd.costE1,2)} €</span></div>
+                        <div class="flex justify-between"><span>E2 (${num(bd.consumo_llano,0)} kWh x ${num(offer.p2_price,6)})</span><span>${num(bd.costE2,2)} €</span></div>
+                        <div class="flex justify-between"><span>E3 (${num(bd.consumo_valle,0)} kWh x ${num(offer.p3_price,6)})</span><span>${num(bd.costE3,2)} €</span></div>
+                    </div>
+
+                    <!-- Impuestos -->
+                    <div class="border-t border-slate-200 pt-2 mb-2">
+                        <div class="flex justify-between font-bold text-slate-800"><span>SUBTOTAL (P+E)</span><span>${num(bd.subBase,2)} €</span></div>
+                        <div class="flex justify-between"><span>Impuesto Eléc. (${num(bd.IE_RATE * 100, 3)}%)</span><span>${num(bd.costIE,2)} €</span></div>
+                        <div class="flex justify-between font-bold mt-1"><span>BASE IMPONIBLE</span><span>${num(bd.baseImp,2)} €</span></div>
+                        <div class="flex justify-between"><span>IVA (21%)</span><span>${num(bd.costIVA,2)} €</span></div>
+                    </div>
+
+                    <!-- Totales (Periodo, Mes, Año) -->
+                    <div class="border-t border-slate-200 pt-2 mb-2">
+                         <div class="flex justify-between font-bold text-slate-800 mb-1">
+                            <span>TOTAL PERIODO (${bd.dias_facturados} días)</span>
+                            <span>${eur(bd.totalPeriod)}</span>
+                        </div>
+                    </div>
+                    <div class="bg-drk-900 text-white p-3 rounded-lg flex justify-between items-center text-md font-bold mb-1">
+                        <span>TOTAL MES (Estimado)</span>
+                        <span>${eur(newMonthlyCost)}</span>
+                    </div>
+                    <div class="bg-drk-600 text-white p-3 rounded-lg flex justify-between items-center text-lg font-bold">
+                        <span>TOTAL ANUAL (Proyección)</span>
+                        <span>${eur(bd.totalAnnual)}</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        // INICIALIZACIÓN
+        function initApp() {
+            // 1. Intentar cargar desde caché local
+            currentTariffs = loadTariffsFromStorage();
+            updateTariffCount();
+            
+            // 2. Intentar cargar la última versión de Google Sheets
+            fetchTariffsFromSheet();
+
+            // 3. Establecer estado inicial de bloqueo
+            toggleTariffManagement(false);
+
+            // 4. Listeners
+            els.loadTariffsBtn.addEventListener('click', () => fetchTariffsFromSheet(true)); // Botón de recarga manual
+            els.resetTariffsBtn.addEventListener('click', resetTariffs);
+            els.startScanBtn.addEventListener('click', startScanner);
+            els.stopScanBtn.addEventListener('click', stopScanner);
+            els.capturePhotoBtn.addEventListener('click', capturePhoto);
+
+            // Listeners para el menú de opciones QR manual
+            els.uploadMenuBtn.addEventListener('click', () => els.qrOptionsModal.classList.remove('hidden'));
+            els.modalUploadFileBtn.addEventListener('click', () => els.imageFileInput.click()); 
+            els.imageFileInput.addEventListener('change', handleImageUpload);
+            
+            // Configurar el "pegado" de imagen
+            setupPasteCatcher();
+            
+            // Listener de contraseña
+            els.tariffPasswordInput.addEventListener('input', handlePasswordInput);
+
+            els.simulateScanBtn.addEventListener('click', () => {
+                const val = els.cupsInput.value.trim();
+                if (currentTariffs.length === 0) return window.showErrorModal("Cargue tarifas primero.");
+                handleQRRead(val);
+            });
+            
+            console.log("App iniciada. Intentando cargar tarifas...");
+        }
+
+        window.onload = initApp;
+
+    </script>
+</body>
+</html>
