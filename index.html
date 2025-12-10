@@ -56,50 +56,14 @@
         <!-- VISTA 1: INICIO Y CARGA -->
         <div id="initial-view" class="fade-in">
             
-            <!-- SECCIÓN DE ADMINISTRACIÓN DE TARIFAS (PROTEGIDA) -->
-            <div class="mb-6">
-                <!-- Bloque de Cabecera y Contraseña -->
-                <div class="bg-white border border-slate-200 p-5 rounded-2xl shadow-sm relative overflow-hidden flex justify-between items-center transition" id="tariff-admin-header">
-                    <div class="absolute top-0 left-0 w-1 h-full bg-drk-500"></div>
-                    <div class="flex items-center gap-3">
-                        <!-- Icono de Candado (se actualiza con JS) -->
-                        <svg id="lock-icon" class="w-6 h-6 text-red-500 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <!-- Candado cerrado por defecto -->
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"></path>
-                            <path id="lock-chain" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 7v2a1 1 0 002 0V7a1 1 0 00-2 0z"></path>
-                        </svg>
-                        <div>
-                            <p class="font-bold text-slate-700 text-lg">Base de Datos de Tarifas (Admin)</p>
-                            <p class="text-sm text-slate-500 mt-1">Estado: <span id="tariff-count" class="font-bold text-drk-600">0 cargadas</span></p>
-                            <p class="text-xs text-slate-400">Fuente: Google Sheets</p>
-                        </div>
-                    </div>
-                    <!-- Input de Contraseña -->
-                    <input type="password" id="tariff-password-input" placeholder="Contraseña..." class="w-32 text-xs p-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-drk-500 outline-none">
+            <!-- Tarjeta de Acción Principal -->
+            <div class="bg-white p-6 rounded-3xl shadow-xl text-center border-t-4 border-drk-500 relative">
+                
+                <!-- V - [NUMERO] DISPLAY (Contador de Tarifas) -->
+                <div class="absolute top-4 right-4 bg-drk-500 px-2 py-1 rounded-full text-white text-xs font-bold shadow-md">
+                    V - <span id="tariff-display-badge">0</span>
                 </div>
 
-                <!-- Contenido de Gestión de Tarifas (Inicialmente Oculto) -->
-                <div id="tariff-management-content" class="hidden p-5 border border-t-0 border-slate-200 bg-white rounded-b-2xl shadow-sm -mt-3 pt-5">
-                    <div class="flex flex-col gap-2">
-                        <!-- Eliminamos input file y usamos solo el botón de carga desde la hoja -->
-                        <button id="load-tariffs-btn" class="w-full bg-drk-600 hover:bg-drk-800 text-white font-medium py-2.5 px-4 rounded-xl transition shadow-sm flex items-center justify-center gap-2">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-                            Recargar Tarifas desde Google Sheets
-                        </button>
-                        <div class="flex gap-2">
-                            <button id="reset-tariffs-btn" class="w-1/2 bg-white border border-slate-300 text-slate-600 hover:bg-slate-50 font-medium py-2 rounded-xl text-xs transition">
-                                Borrar Cache Local
-                            </button>
-                            <button onclick="document.getElementById('tariff-guide-modal').classList.remove('hidden');" class="w-1/2 text-drk-600 hover:underline text-xs font-medium text-center py-2">
-                                ¿Formato CSV esperado?
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Tarjeta de Acción Principal -->
-            <div class="bg-white p-6 rounded-3xl shadow-xl text-center border-t-4 border-drk-500">
                 <div class="w-16 h-16 bg-drk-50 rounded-full flex items-center justify-center mx-auto mb-4 text-drk-600">
                     <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
                 </div>
@@ -117,19 +81,11 @@
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1m-4-5l-1-1m0 0l-1-1m0 0l-1-1M12 12v.01"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
                     <span>OPCIONES QR MANUAL</span>
                 </button>
-                <p id="loading-status" class="text-center text-sm text-slate-400 mt-4 hidden">Inicializando cámara...</p>
+                <p id="loading-status" class="text-center text-sm text-slate-400 mt-4 hidden">Cargando tarifas automáticamente...</p>
             </div>
 
-             <!-- Simulación Manual (Colapsable o pequeña) -->
-             <div class="mt-8 pt-6 border-t border-slate-200">
-                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 text-center">Modo Manual / Pruebas</p>
-                <div class="flex gap-2">
-                    <input type="text" id="cups-input" placeholder="Pegar cadena QR CNMC..." class="w-full bg-white border border-slate-200 text-xs p-3 rounded-xl focus:ring-2 focus:ring-drk-500 outline-none">
-                    <button id="simulate-scan-btn" class="bg-slate-200 hover:bg-slate-300 text-slate-600 font-bold py-2 px-4 rounded-xl text-xs transition">
-                        Simular
-                    </button>
-                </div>
-            </div>
+            <!-- Se eliminó la sección de MODO MANUAL / PRUEBAS -->
+
         </div>
 
         <!-- VISTA 2: ESCÁNER -->
@@ -321,8 +277,7 @@
     <!-- SCRIPT PRINCIPAL -->
     <script>
         // --- CONFIGURACIÓN DE GOOGLE SHEETS ---
-        // ID de la hoja: 13JrbK1T4x5W-2U7KPFprCXMl-FxizxofPA5w8MINyak
-        // GID para la primera pestaña (Hoja1) = 0
+        // La URL de exportación debe ser visible para que el navegador pueda acceder a los datos.
         const SHEET_ID = '13JrbK1T4x5W-2U7KPFprCXMl-FxizxofPA5w8MINyak';
         const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=0`;
         // ------------------------------------
@@ -330,7 +285,6 @@
         // CONSTANTES GLOBALES
         const ANNUAL_DAYS = 365;
         const LOCAL_STORAGE_KEY = 'drk_loaded_tariffs';
-        const TARIFF_PASSWORD = "DRK12345678&"; // Contraseña de administración
 
         // VARIABLES DE ESTADO
         let currentTariffs = [];
@@ -347,23 +301,14 @@
             stopScanBtn: document.getElementById('stop-scan-btn'),
             capturePhotoBtn: document.getElementById('capture-photo-btn'),
             loadingStatus: document.getElementById('loading-status'),
-            simulateScanBtn: document.getElementById('simulate-scan-btn'),
-            cupsInput: document.getElementById('cups-input'),
             
-            // Elementos de Admin/Contraseña
-            tariffPasswordInput: document.getElementById('tariff-password-input'),
-            tariffManagementContent: document.getElementById('tariff-management-content'),
-            lockIcon: document.getElementById('lock-icon'),
-            tariffAdminHeader: document.getElementById('tariff-admin-header'),
-            loadTariffsBtn: document.getElementById('load-tariffs-btn'),
-            resetTariffsBtn: document.getElementById('reset-tariffs-btn'),
-            tariffCountSpan: document.getElementById('tariff-count'),
+            // Elementos para el contador
+            tariffDisplayBadge: document.getElementById('tariff-display-badge'),
 
             // Elementos para subir imagen/modal
             uploadMenuBtn: document.getElementById('upload-menu-btn'),
             imageFileInput: document.getElementById('image-file-input'),
             qrOptionsModal: document.getElementById('qr-options-modal'),
-            modalUploadFileBtn: document.getElementById('modal-upload-file-btn'),
             modalPasteImageBtn: document.getElementById('modal-paste-image-btn'), 
             pasteCatcher: document.getElementById('paste-catcher'), 
             
@@ -384,16 +329,20 @@
         // --- GESTIÓN DE TARIFAS Y PERSISTENCIA (CACHE LOCAL) ---
 
         function updateTariffCount() {
-            els.tariffCountSpan.textContent = `${currentTariffs.length} cargadas`;
+            // Actualizar el badge V - [COUNT]
+            els.tariffDisplayBadge.textContent = currentTariffs.length;
+            
             if (currentTariffs.length > 0) {
-                els.tariffCountSpan.classList.remove('text-slate-400');
-                els.tariffCountSpan.classList.add('text-green-600');
+                // Ocultar mensaje de carga/error si hay tarifas
                 els.loadingStatus.classList.add('hidden');
+                els.startScanBtn.disabled = false;
+                els.uploadMenuBtn.disabled = false;
             } else {
-                els.tariffCountSpan.classList.add('text-slate-400');
-                els.tariffCountSpan.classList.remove('text-green-600');
-                els.loadingStatus.textContent = "Error: No hay tarifas disponibles.";
+                // Mostrar mensaje de error si no hay tarifas
+                els.loadingStatus.textContent = "Error: No hay tarifas disponibles. Recargando...";
                 els.loadingStatus.classList.remove('hidden');
+                els.startScanBtn.disabled = true;
+                els.uploadMenuBtn.disabled = true;
             }
         }
 
@@ -408,18 +357,8 @@
         function saveTariffsToStorage(tariffs) {
             localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(tariffs));
         }
-
-        function resetTariffs() {
-            currentTariffs = [];
-            localStorage.removeItem(LOCAL_STORAGE_KEY);
-            updateTariffCount();
-            window.showMessageModal("Caché local de tarifas borrada. Se intentará recargar desde Google Sheets.");
-            
-            // Bloquear automáticamente después de resetear
-            els.tariffPasswordInput.value = '';
-            toggleTariffManagement(false);
-            fetchTariffsFromSheet(true); // Intentar recargar después de borrar
-        }
+        
+        // Se eliminó la función resetTariffs y su lógica asociada.
 
         // --- LÓGICA DE CARGA DIRECTA DESDE GOOGLE SHEETS ---
 
@@ -427,20 +366,16 @@
             const lines = text.trim().split('\n');
             if (lines.length < 2) throw new Error("Archivo CSV vacío o sin datos de tarifas.");
             
-            // Diagnóstico de error de Google Sheets (No CSV devuelto, sino HTML de error/acceso)
             if (lines[0].toLowerCase().includes('<html') || lines[0].toLowerCase().includes('doc.title')) { 
                  throw new Error("Error de acceso o formato. Asegúrese de que la hoja sea 'Pública'.");
             }
             
             let rawHeaders = lines[0].trim();
-            // Forzamos el separador coma, que es el que usa Google Sheets
             const delimiter = ','; 
-            // Limpiamos comillas y convertimos a minúsculas
             const headers = rawHeaders.split(delimiter).map(h => h.trim().toLowerCase().replace(/"/g, ''));
             
             const requiredHeaders = ['name', 'description', 'p1_price', 'p2_price', 'p3_price', 'p_potencia_1', 'p_potencia_2'];
             
-            // Revisar si faltan cabeceras
             const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
             if (missingHeaders.length > 0) {
                 throw new Error(`Faltan cabeceras requeridas: ${missingHeaders.join(', ')}. Las cabeceras detectadas son: ${headers.join(', ')}.`);
@@ -451,16 +386,14 @@
                 const line = lines[i].trim();
                 if (!line) continue;
 
-                // --- FIX: Lógica robusta de split que respeta comillas ---
-                // Necesario porque el valor decimal es ',' que coincide con el separador de campo.
+                // FIX: Lógica robusta de split que respeta comillas, crucial para valores como "0,099"
                 const values = [];
                 let current = '';
                 let inQuotes = false;
                 
                 for (let k = 0; k < line.length; k++) {
                     const char = line[k];
-
-                    if (char === '"' && line[k+1] !== '"') { // Ignorar comillas dobles escapadas (CSV estándar)
+                    if (char === '"' && line[k+1] !== '"') { 
                         inQuotes = !inQuotes;
                     } else if (char === delimiter && !inQuotes) {
                         values.push(current);
@@ -469,11 +402,11 @@
                         current += char;
                     }
                 }
-                values.push(current); // Último item
-                // --- FIN FIX: Lógica robusta de split ---
+                values.push(current); 
 
                 if (values.length !== headers.length) {
-                    console.warn(`Saltando línea ${i} debido a conteo de columnas incorrecto: ${values.length} vs ${headers.length}. Línea: ${line}`);
+                    // Solo loguear si la línea es muy diferente, no es un error fatal
+                    if (line.length > 10) console.warn(`Saltando línea ${i} debido a conteo de columnas incorrecto.`);
                     continue;
                 }
                 
@@ -482,11 +415,10 @@
                 
                 for (let j = 0; j < headers.length; j++) {
                     const header = headers[j];
-                    // Quitar las comillas de inicio/fin y espacios.
                     const value = values[j].trim().replace(/^"|"$/g, '').replace(/""/g, '"'); 
                     
                     if (header.includes('price') || header.includes('potencia')) {
-                        // FIX: Sustitución de coma decimal por punto, ESENCIAL para parseFloat
+                        // SUSTITUCIÓN DE COMA DECIMAL POR PUNTO para parseFloat
                         const numValue = parseFloat(value.replace(',', '.')); 
                         if (!isNaN(numValue)) {
                             if (header.includes('potencia') && numValue < 1.0 && numValue > 0) {
@@ -495,7 +427,6 @@
                                 tariff[header] = numValue;
                             }
                         } else {
-                             // Si no es un número válido, marcamos la fila como inválida
                              isValidTariff = false;
                              break;
                         }
@@ -512,11 +443,10 @@
         }
 
 
-        async function fetchTariffsFromSheet(isManual = false) {
-            if (!isManual) {
-                els.loadingStatus.textContent = "Cargando tarifas (Intentando desde Google Sheets)...";
-                els.loadingStatus.classList.remove('hidden');
-            }
+        async function fetchTariffsFromSheet() {
+            // Muestra el mensaje de carga al inicio
+            els.loadingStatus.textContent = "Cargando tarifas automáticamente desde Drive...";
+            els.loadingStatus.classList.remove('hidden');
             
             let csvText = '';
             try {
@@ -535,292 +465,38 @@
                 
                 currentTariffs = loaded;
                 saveTariffsToStorage(currentTariffs);
-                updateTariffCount();
-                
-                if (isManual) {
-                    window.showMessageModal(`¡Éxito! ${currentTariffs.length} tarifas recargadas desde Google Sheets.`);
-                }
                 
             } catch (err) {
                 console.error("Error diagnóstico (Recepción de datos):", csvText || "Respuesta vacía o fallida.");
                 
                 const cachedTariffs = loadTariffsFromStorage();
                 currentTariffs = cachedTariffs;
-                updateTariffCount();
 
                 if (cachedTariffs.length > 0) {
-                    window.showErrorModal(`ALERTA: Falló la carga desde Google Sheets. Usando ${cachedTariffs.length} tarifas de la caché local. (Error: ${err.message})`);
+                    console.warn(`ALERTA: Falló la carga desde Google Sheets. Usando ${cachedTariffs.length} tarifas de la caché local. (Error: ${err.message})`);
                 } else {
-                    window.showErrorModal(`Error al conectar con Google Sheets y no hay caché local: ${err.message}.`);
+                    window.showErrorModal(`Error crítico al cargar tarifas: ${err.message}. Asegúrese de que la hoja de Drive es pública.`);
                 }
             } finally {
-                if (!isManual) {
-                    els.loadingStatus.classList.add('hidden');
-                }
+                // Siempre actualizar el contador y ocultar el estado de carga al finalizar
+                updateTariffCount();
             }
         }
 
-        // --- LÓGICA DE BLOQUEO/DESBLOQUEO ---
-
-        function toggleTariffManagement(isUnlocked) {
-            if (isUnlocked) {
-                els.tariffManagementContent.classList.remove('hidden');
-                els.lockIcon.classList.remove('text-red-500');
-                els.lockIcon.classList.add('text-green-500');
-                els.lockIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0v4m-5 4h2m-2 4h2m2 4h-2a2 2 0 01-2-2v-6a2 2 0 012-2h4a2 2 0 012 2v6a2 2 0 01-2 2zM12 18h.01"></path>';
-                els.tariffAdminHeader.classList.add('rounded-b-none');
-                els.tariffPasswordInput.style.backgroundColor = '#d1fae5';
-            } else {
-                els.tariffManagementContent.classList.add('hidden');
-                els.lockIcon.classList.add('text-red-500');
-                els.lockIcon.classList.remove('text-green-500');
-                els.lockIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"></path><path id="lock-chain" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 7v2a1 1 0 002 0V7a1 1 0 00-2 0z"></path>';
-                els.tariffAdminHeader.classList.remove('rounded-b-none');
-                els.tariffPasswordInput.style.backgroundColor = '';
-            }
-        }
-
-        function handlePasswordInput() {
-            const password = els.tariffPasswordInput.value;
-            const isUnlocked = password === TARIFF_PASSWORD;
-            toggleTariffManagement(isUnlocked);
-        }
-
-        // --- GESTIÓN DE VISTAS Y ERRORES ---
-
-        function showView(viewId) {
-            els.initialView.classList.add('hidden');
-            els.resultsView.classList.add('hidden');
-            els.scannerView.classList.add('hidden');
-            els.resultsView.classList.remove('animate-fade-in-up'); 
-            
-            const target = document.getElementById(viewId);
-            target.classList.remove('hidden');
-            if(viewId === 'results-view') target.classList.add('animate-fade-in-up');
-        }
-
-        window.showErrorModal = (msg) => {
-            document.getElementById('error-title').textContent = "¡Ups! Algo salió mal";
-            document.getElementById('error-icon').className = "w-12 h-12 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4";
-            document.getElementById('error-icon').innerHTML = '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>';
-            document.getElementById('error-message').textContent = msg;
-            document.getElementById('error-modal').classList.remove('hidden');
-            document.getElementById('error-modal').classList.add('flex');
-        }
-
-        window.showMessageModal = (msg) => {
-             document.getElementById('error-title').textContent = "Operación Exitosa";
-             document.getElementById('error-icon').className = "w-12 h-12 bg-drk-100 text-drk-500 rounded-full flex items-center justify-center mx-auto mb-4";
-             document.getElementById('error-icon').innerHTML = '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>';
-             document.getElementById('error-message').textContent = msg;
-             document.getElementById('error-modal').classList.remove('hidden');
-             document.getElementById('error-modal').classList.add('flex');
-        }
-
-        window.hideErrorModal = () => {
-            document.getElementById('error-modal').classList.add('hidden');
-            document.getElementById('error-modal').classList.remove('flex');
-            document.getElementById('error-title').textContent = "¡Ups! Algo salió mal";
-            document.getElementById('error-icon').className = "w-12 h-12 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4";
-        }
-
-        window.resetApp = () => {
-            stopScanner();
-            showView('initial-view');
-            els.loadingStatus.classList.add('hidden');
-            els.startScanBtn.disabled = false;
-            els.uploadMenuBtn.disabled = false; 
-        };
-
-        // --- MANEJO DE IMAGEN Y TEXTO QR ---
-
-        function handleImageForQR(imageFile) {
-            if (currentTariffs.length === 0) {
-                return window.showErrorModal("Primero debe cargar las tarifas (o esperar a que se carguen desde Google Sheets).");
-            }
-
-            processImageForQR(imageFile);
-            els.imageFileInput.value = '';
-        }
-        
-        function handleImageUpload(event) {
-            els.qrOptionsModal.classList.add('hidden');
-            const file = event.target.files[0];
-            if (!file) return;
-            handleImageForQR(file);
-        }
-
-        function processImageForQR(file) {
-            els.loadingStatus.textContent = "Procesando imagen...";
-            els.loadingStatus.classList.remove('hidden');
-            els.startScanBtn.disabled = true;
-            els.uploadMenuBtn.disabled = true;
-
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const img = new Image();
-                img.onload = () => {
-                    const tempCanvas = document.createElement('canvas');
-                    const tempCtx = tempCanvas.getContext('2d');
-                    
-                    let { width, height } = img;
-                    const max_dim = 1000;
-                    if (width > max_dim || height > max_dim) {
-                        const ratio = Math.min(max_dim / width, max_dim / height);
-                        width *= ratio;
-                        height *= ratio;
-                    }
-
-                    tempCanvas.width = width;
-                    tempCanvas.height = height;
-                    tempCtx.drawImage(img, 0, 0, width, height);
-
-                    try {
-                        const imageData = tempCtx.getImageData(0, 0, width, height);
-                        const code = jsQR(imageData.data, imageData.width, imageData.height);
-                        
-                        els.loadingStatus.classList.add('hidden');
-                        els.startScanBtn.disabled = false;
-                        els.uploadMenuBtn.disabled = false;
-
-                        if (code) {
-                            handleQRRead(code.data);
-                        } else {
-                            window.showErrorModal("No se pudo detectar el código QR en la imagen. Asegúrese de que el código esté claro y sin reflejos.");
-                        }
-                    } catch (error) {
-                        els.loadingStatus.classList.add('hidden');
-                        els.startScanBtn.disabled = false;
-                        els.uploadMenuBtn.disabled = false;
-                        console.error("Error al procesar la imagen para QR:", error);
-                        window.showErrorModal("Error interno al escanear la imagen.");
-                    }
-                };
-                img.onerror = () => {
-                    els.loadingStatus.classList.add('hidden');
-                    els.startScanBtn.disabled = false;
-                    els.uploadMenuBtn.disabled = false;
-                    window.showErrorModal("Error al cargar la imagen. ¿Es un formato válido?");
-                };
-                img.src = e.target.result;
-            };
-            reader.readAsDataURL(file);
-        }
-        
-        function setupPasteCatcher() {
-            document.addEventListener('paste', (e) => {
-                if (els.qrOptionsModal.classList.contains('hidden') || !els.pasteCatcher.matches(':focus')) return;
-
-                const items = e.clipboardData.items;
-                for (let i = 0; i < items.length; i++) {
-                    if (items[i].type.indexOf('image') !== -1) {
-                        const blob = items[i].getAsFile();
-                        if (blob) {
-                            els.qrOptionsModal.classList.add('hidden');
-                            e.preventDefault();
-                            handleImageForQR(blob);
-                            break;
-                        }
-                    }
-                }
-            });
-
-            els.modalPasteImageBtn.addEventListener('click', () => {
-                els.pasteCatcher.focus();
-                window.showMessageModal("Presione CTRL+V (o Comando+V) para pegar la imagen en esta ventana.");
-                setTimeout(hideErrorModal, 5000); 
-            });
-        }
-
-
-        // --- LÓGICA DE ESCANEO (jsQR) ---
-
-        function startScanner() {
-            if (currentTariffs.length === 0) return window.showErrorModal("Primero debe cargar las tarifas (o esperar a que se carguen desde Google Sheets).");
-            if (scannerRunning) return;
-            
-            showView('scanner-view');
-            scannerRunning = true;
-            
-            video = document.createElement('video');
-            video.autoplay = true;
-            video.playsInline = true;
-            canvas = document.createElement('canvas');
-            canvasCtx = canvas.getContext('2d');
-            
-            els.interactiveViewport.innerHTML = '';
-            els.interactiveViewport.appendChild(video);
-
-            navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
-                .then(s => {
-                    stream = s;
-                    video.srcObject = stream;
-                    video.onloadedmetadata = () => { video.play(); scanLoop(); };
-                })
-                .catch(err => {
-                    console.error(err);
-                    stopScanner();
-                    window.showErrorModal("No se pudo acceder a la cámara.");
-                    window.resetApp();
-                });
-        }
-
-        function scanLoop() {
-            if (!scannerRunning || !video || video.readyState !== video.HAVE_ENOUGH_DATA) {
-                animationFrameId = requestAnimationFrame(scanLoop);
-                return;
-            }
-            if (canvas.width !== video.videoWidth) {
-                canvas.width = video.videoWidth;
-                canvas.height = video.videoHeight;
-            }
-            canvasCtx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            const imageData = canvasCtx.getImageData(0, 0, canvas.width, canvas.height);
-            const code = jsQR(imageData.data, imageData.width, imageData.height);
-            if (code) {
-                stopScanner();
-                handleQRRead(code.data);
-            } else {
-                animationFrameId = requestAnimationFrame(scanLoop);
-            }
-        }
-
-        function stopScanner() {
-            scannerRunning = false;
-            if (animationFrameId) cancelAnimationFrame(animationFrameId);
-            if (stream) stream.getTracks().forEach(t => t.stop());
-            video = null;
-        }
-
-        function capturePhoto() {
-            if (!video || video.readyState !== video.HAVE_ENOUGH_DATA) return;
-            canvasCtx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            const imageData = canvasCtx.getImageData(0, 0, canvas.width, canvas.height);
-            const code = jsQR(imageData.data, imageData.width, imageData.height);
-            if (code) {
-                stopScanner();
-                handleQRRead(code.data);
-            } else {
-                window.showErrorModal("No se detectó QR en la imagen. Intente acercarse más.");
-            }
-        }
-
-        // --- LÓGICA DE PARSEO Y CÁLCULO ---
+        // --- LÓGICA DE ESCANEO Y COMPARATIVA (Sin cambios) ---
 
         function dateDiffInDays(d1, d2) {
             const parse = (str) => {
-                if (!str || str.length !== 10) return null;
+                if (!str && str.length !== 10) return null;
                 if (str.includes('/')) {
                     const p = str.split('/');
-                    // Intentar parsear DD/MM/YYYY
                     return new Date(p[2], p[1]-1, p[0]);
                 }
                 if (str.includes('-')) {
-                    // Intentar parsear YYYY-MM-DD
                     const p = str.split('-');
                     return new Date(p[0], p[1]-1, p[2]);
                 }
-                if (str.length === 8) { // YYYYMMDD
+                if (str.length === 8) { 
                     const year = str.substring(0, 4);
                     const month = str.substring(4, 6);
                     const day = str.substring(6, 8);
@@ -835,7 +511,6 @@
         }
 
         function handleQRRead(raw) {
-            // Limpieza básica
             if (raw.includes('?')) raw = raw.split('?')[1] || raw;
             
             const p = {};
@@ -844,7 +519,6 @@
                 if(k) p[k] = decodeURIComponent(v||'').replace(',', '.');
             });
 
-            // Parseo de datos CNMC
             const data = {
                 cups: p.cups || 'No detectado',
                 dias_facturados: dateDiffInDays(p.iniF, p.finF),
@@ -854,7 +528,6 @@
                 consumo_total: parseFloat(p.cfP1||0)+parseFloat(p.cfP2||0)+parseFloat(p.cfP3||0),
                 potencia_p1_kw: parseFloat(p.pP1||0),
                 potencia_p2_kw: parseFloat(p.pP2||0),
-                // USAMOS el importe total (imp) que viene con impuestos, para reflejar el valor real de la factura del cliente
                 importe_total: parseFloat(p.imp||0), 
                 fechas: `${p.iniF || '?'} - ${p.finF || '?'}`
             };
@@ -870,9 +543,8 @@
 
         function compareOffers(data) {
             const IVA_RATE = 0.21;
-            const IE_RATE = 0.05113; // Ajustado a valor típico
+            const IE_RATE = 0.05113; 
 
-            // Factor anualización
             const factorAnual = ANNUAL_DAYS / data.dias_facturados;
             const originalBillAnnual = data.importe_total * factorAnual; 
 
@@ -881,7 +553,6 @@
             let bestBreakdown = null;
 
             currentTariffs.forEach(t => {
-                // Cálculo Potencia (Potencia en €/kW año, lo dividimos por días para obtener €/kW día)
                 const priceP1Day = t.p_potencia_1 / ANNUAL_DAYS;
                 const priceP2Day = t.p_potencia_2 / ANNUAL_DAYS;
                 
@@ -889,20 +560,18 @@
                 const costP2 = data.potencia_p2_kw * data.dias_facturados * priceP2Day;
                 const subPower = costP1 + costP2;
 
-                // Cálculo Energía (Precios en €/kWh)
                 const costE1 = data.consumo_punta * t.p1_price;
                 const costE2 = data.consumo_llano * t.p2_price;
                 const costE3 = data.consumo_valle * t.p3_price;
                 const subEnergy = costE1 + costE2 + costE3;
 
-                // Impuestos
                 const subBase = subPower + subEnergy;
                 const costIE = subBase * IE_RATE;
                 const baseImp = subBase + costIE;
                 const costIVA = baseImp * IVA_RATE;
                 
-                const totalPeriod = baseImp + costIVA; // Coste DRK para el periodo exacto de la factura
-                const totalAnnual = totalPeriod * factorAnual; // Proyección Anual DRK
+                const totalPeriod = baseImp + costIVA; 
+                const totalAnnual = totalPeriod * factorAnual; 
 
                 if (totalAnnual < minAnnualCost) {
                     minAnnualCost = totalAnnual;
@@ -919,7 +588,6 @@
 
             const savings = originalBillAnnual - minAnnualCost;
 
-            // RENDERIZADO DE RESULTADOS
             renderResultsUI(bestOffer, bestBreakdown, savings, originalBillAnnual);
             showView('results-view');
         }
@@ -931,25 +599,20 @@
             const eur = (n) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(n);
             const num = (n, d=2) => new Intl.NumberFormat('es-ES', { minimumFractionDigits: d, maximumFractionDigits: d }).format(n);
 
-            // 1. Datos básicos
             els.cupsValue.textContent = bd.cups;
             els.bestOfferName.textContent = offer.name;
             els.bestOfferDesc.textContent = offer.description;
             
-            // 2. Bloque Comparativo 
             els.savingsEstimate.textContent = eur(savings);
             els.savingsEstimate.className = savings >= 0 ? "text-5xl font-black text-green-500 tracking-tight" : "text-5xl font-black text-red-500 tracking-tight";
             
-            // Coste Actual (Factura del cliente)
             els.oldPeriodCostDisplay.textContent = eur(oldPeriodCost);
             els.oldPeriodDaysLabel.textContent = `Total Periodo (${bd.dias_facturados} días)`;
             els.oldAnnualCostDisplay.textContent = eur(oldAnnual) + "/año";
             
-            // Coste Nuevo DRK
             els.newMonthlyCostDisplay.textContent = eur(newMonthlyCost) + "/mes";
             els.newAnnualCostDisplay.textContent = eur(bd.totalAnnual) + "/año";
 
-            // 3. Detalles de Consumo
             els.userConsumptionDetails.innerHTML = `
                 <div class="grid grid-cols-2 gap-4">
                     <div><p class="text-xs text-slate-500">Periodo</p><p class="font-bold text-slate-700">${bd.dias_facturados} días</p></div>
@@ -963,7 +626,6 @@
                 </div>
             `;
 
-            // 4. Desglose Tipo Ticket
             els.costBreakdown.innerHTML = `
                 <div class="bg-white p-6 font-mono text-xs md:text-sm text-slate-600 leading-relaxed">
                     <div class="text-center border-b-2 border-dashed border-slate-300 pb-4 mb-4">
@@ -1018,44 +680,218 @@
                 </div>
             `;
         }
+        
+        // --- GESTIÓN DE VISTAS Y ERRORES / UTILS (Sin cambios) ---
+
+        function startScanner() {
+            if (currentTariffs.length === 0) return window.showErrorModal("Primero debe cargar las tarifas.");
+            if (scannerRunning) return;
+            showView('scanner-view');
+            scannerRunning = true;
+            video = document.createElement('video');
+            video.autoplay = true;
+            video.playsInline = true;
+            canvas = document.createElement('canvas');
+            canvasCtx = canvas.getContext('2d');
+            els.interactiveViewport.innerHTML = '';
+            els.interactiveViewport.appendChild(video);
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+                .then(s => {
+                    stream = s;
+                    video.srcObject = stream;
+                    video.onloadedmetadata = () => { video.play(); scanLoop(); };
+                })
+                .catch(err => {
+                    console.error(err);
+                    stopScanner();
+                    window.showErrorModal("No se pudo acceder a la cámara.");
+                    window.resetApp();
+                });
+        }
+        function scanLoop() {
+            if (!scannerRunning || !video || video.readyState !== video.HAVE_ENOUGH_DATA) {
+                animationFrameId = requestAnimationFrame(scanLoop);
+                return;
+            }
+            if (canvas.width !== video.videoWidth) {
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+            }
+            canvasCtx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const imageData = canvasCtx.getImageData(0, 0, canvas.width, canvas.height);
+            const code = jsQR(imageData.data, imageData.width, imageData.height);
+            if (code) {
+                stopScanner();
+                handleQRRead(code.data);
+            } else {
+                animationFrameId = requestAnimationFrame(scanLoop);
+            }
+        }
+        function stopScanner() {
+            scannerRunning = false;
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            if (stream) stream.getTracks().forEach(t => t.stop());
+            video = null;
+        }
+        function capturePhoto() {
+            if (!video || video.readyState !== video.HAVE_ENOUGH_DATA) return;
+            canvasCtx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const imageData = canvasCtx.getImageData(0, 0, canvas.width, canvas.height);
+            const code = jsQR(imageData.data, imageData.width, imageData.height);
+            if (code) {
+                stopScanner();
+                handleQRRead(code.data);
+            } else {
+                window.showErrorModal("No se detectó QR en la imagen. Intente acercarse más.");
+            }
+        }
+        function handleImageForQR(imageFile) {
+            if (currentTariffs.length === 0) {
+                return window.showErrorModal("Primero debe cargar las tarifas.");
+            }
+            processImageForQR(imageFile);
+            document.getElementById('image-file-input').value = '';
+        }
+        function handleImageUpload(event) {
+            document.getElementById('qr-options-modal').classList.add('hidden');
+            const file = event.target.files[0];
+            if (!file) return;
+            handleImageForQR(file);
+        }
+        function processImageForQR(file) {
+            els.loadingStatus.textContent = "Procesando imagen...";
+            els.loadingStatus.classList.remove('hidden');
+            els.startScanBtn.disabled = true;
+            els.uploadMenuBtn.disabled = true;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    const tempCanvas = document.createElement('canvas');
+                    const tempCtx = tempCanvas.getContext('2d');
+                    let { width, height } = img;
+                    const max_dim = 1000;
+                    if (width > max_dim || height > max_dim) {
+                        const ratio = Math.min(max_dim / width, max_dim / height);
+                        width *= ratio;
+                        height *= ratio;
+                    }
+                    tempCanvas.width = width;
+                    tempCanvas.height = height;
+                    tempCtx.drawImage(img, 0, 0, width, height);
+                    try {
+                        const imageData = tempCtx.getImageData(0, 0, width, height);
+                        const code = jsQR(imageData.data, imageData.width, imageData.height);
+                        els.loadingStatus.classList.add('hidden');
+                        els.startScanBtn.disabled = false;
+                        els.uploadMenuBtn.disabled = false;
+                        if (code) {
+                            handleQRRead(code.data);
+                        } else {
+                            window.showErrorModal("No se pudo detectar el código QR en la imagen. Asegúrese de que el código esté claro y sin reflejos.");
+                        }
+                    } catch (error) {
+                        els.loadingStatus.classList.add('hidden');
+                        els.startScanBtn.disabled = false;
+                        els.uploadMenuBtn.disabled = false;
+                        console.error("Error al procesar la imagen para QR:", error);
+                        window.showErrorModal("Error interno al escanear la imagen.");
+                    }
+                };
+                img.onerror = () => {
+                    els.loadingStatus.classList.add('hidden');
+                    els.startScanBtn.disabled = false;
+                    els.uploadMenuBtn.disabled = false;
+                    window.showErrorModal("Error al cargar la imagen. ¿Es un formato válido?");
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+        function setupPasteCatcher() {
+            document.addEventListener('paste', (e) => {
+                if (document.getElementById('qr-options-modal').classList.contains('hidden') || !document.getElementById('paste-catcher').matches(':focus')) return;
+                const items = e.clipboardData.items;
+                for (let i = 0; i < items.length; i++) {
+                    if (items[i].type.indexOf('image') !== -1) {
+                        const blob = items[i].getAsFile();
+                        if (blob) {
+                            document.getElementById('qr-options-modal').classList.add('hidden');
+                            e.preventDefault();
+                            handleImageForQR(blob);
+                            break;
+                        }
+                    }
+                }
+            });
+            document.getElementById('modal-paste-image-btn').addEventListener('click', () => {
+                document.getElementById('paste-catcher').focus();
+                window.showMessageModal("Presione CTRL+V (o Comando+V) para pegar la imagen en esta ventana.");
+                setTimeout(window.hideErrorModal, 5000); 
+            });
+        }
+        function showView(viewId) {
+            document.getElementById('initial-view').classList.add('hidden');
+            document.getElementById('results-view').classList.add('hidden');
+            document.getElementById('scanner-view').classList.add('hidden');
+            document.getElementById('results-view').classList.remove('animate-fade-in-up'); 
+            const target = document.getElementById(viewId);
+            target.classList.remove('hidden');
+            if(viewId === 'results-view') target.classList.add('animate-fade-in-up');
+        }
+        window.showErrorModal = (msg) => {
+            document.getElementById('error-title').textContent = "¡Ups! Algo salió mal";
+            document.getElementById('error-icon').className = "w-12 h-12 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4";
+            document.getElementById('error-icon').innerHTML = '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>';
+            document.getElementById('error-message').textContent = msg;
+            document.getElementById('error-modal').classList.remove('hidden');
+            document.getElementById('error-modal').classList.add('flex');
+        }
+        window.showMessageModal = (msg) => {
+             document.getElementById('error-title').textContent = "Operación Exitosa";
+             document.getElementById('error-icon').className = "w-12 h-12 bg-drk-100 text-drk-500 rounded-full flex items-center justify-center mx-auto mb-4";
+             document.getElementById('error-icon').innerHTML = '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>';
+             document.getElementById('error-message').textContent = msg;
+             document.getElementById('error-modal').classList.remove('hidden');
+             document.getElementById('error-modal').classList.add('flex');
+        }
+        window.hideErrorModal = () => {
+            document.getElementById('error-modal').classList.add('hidden');
+            document.getElementById('error-modal').classList.remove('flex');
+            document.getElementById('error-title').textContent = "¡Ups! Algo salió mal";
+            document.getElementById('error-icon').className = "w-12 h-12 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4";
+        }
+        window.resetApp = () => {
+            stopScanner();
+            showView('initial-view');
+            els.loadingStatus.classList.add('hidden');
+            els.startScanBtn.disabled = false;
+            els.uploadMenuBtn.disabled = false; 
+        };
+
 
         // INICIALIZACIÓN
         function initApp() {
-            // 1. Intentar cargar desde caché local
-            currentTariffs = loadTariffsFromStorage();
-            updateTariffCount();
-            
-            // 2. Intentar cargar la última versión de Google Sheets
+            // 1. Intentar cargar la última versión de Google Sheets
             fetchTariffsFromSheet();
 
-            // 3. Establecer estado inicial de bloqueo
-            toggleTariffManagement(false);
-
-            // 4. Listeners
-            els.loadTariffsBtn.addEventListener('click', () => fetchTariffsFromSheet(true)); // Botón de recarga manual
-            els.resetTariffsBtn.addEventListener('click', resetTariffs);
+            // 2. Listeners
+            // Se eliminaron listeners de administración/debug manual
             els.startScanBtn.addEventListener('click', startScanner);
             els.stopScanBtn.addEventListener('click', stopScanner);
             els.capturePhotoBtn.addEventListener('click', capturePhoto);
 
             // Listeners para el menú de opciones QR manual
             els.uploadMenuBtn.addEventListener('click', () => els.qrOptionsModal.classList.remove('hidden'));
-            els.modalUploadFileBtn.addEventListener('click', () => els.imageFileInput.click()); 
-            els.imageFileInput.addEventListener('change', handleImageUpload);
+            document.getElementById('modal-upload-file-btn').addEventListener('click', () => document.getElementById('image-file-input').click()); 
+            document.getElementById('image-file-input').addEventListener('change', handleImageUpload);
             
             // Configurar el "pegado" de imagen
             setupPasteCatcher();
             
-            // Listener de contraseña
-            els.tariffPasswordInput.addEventListener('input', handlePasswordInput);
-
-            els.simulateScanBtn.addEventListener('click', () => {
-                const val = els.cupsInput.value.trim();
-                if (currentTariffs.length === 0) return window.showErrorModal("Cargue tarifas primero.");
-                handleQRRead(val);
-            });
+            // Se eliminó el listener del botón de simular
             
-            console.log("App iniciada. Intentando cargar tarifas...");
+            console.log("App iniciada. Cargando tarifas automáticamente...");
         }
 
         window.onload = initApp;
